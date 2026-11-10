@@ -60,6 +60,7 @@ class Segment:
     duration: float
     narration: str | None
     caption: str | None
+    audible: bool = False
 
 
 def default_duration(scene: Any) -> float:
@@ -253,7 +254,14 @@ def build(
             caption = scene.caption_text or (
                 scene.caption if isinstance(scene, MediaScene) else None
             )
-            segments.append(Segment(sid, seg, cursor, duration, scene.narration, caption))
+            audible = narration_wav is not None or (
+                isinstance(scene, MediaScene)
+                and scene.audio == "keep"
+                and src is not None
+                and not is_image(src)
+                and has_audio(src)
+            )
+            segments.append(Segment(sid, seg, cursor, duration, scene.narration, caption, audible))
             cursor += duration
 
     return _finish(sb, sb_path, out_dir, segments, log)
@@ -273,6 +281,8 @@ def _finish(
     listing.unlink()
 
     mixed = out_dir / ".mixed.mp4"
+    # loudnorm on pure silence yields NaN/Inf in recent ffmpeg builds: only touch audible mixes.
+    audible = sb.music is not None or any(s.audible for s in segments)
     loud = "loudnorm=I=-14:TP=-1.5:LRA=11"
     if sb.music:
         music = resolve_path(sb_path, sb.music.path)
@@ -291,8 +301,10 @@ def _finish(
         )
         run_ffmpeg(["-i", joined, "-stream_loop", "-1", "-i", music, "-filter_complex", graph,
                     "-map", "0:v", "-map", "[a]", "-c:v", "copy", *AUDIO_ARGS, "-shortest", mixed])  # fmt: skip
-    else:
+    elif audible:
         run_ffmpeg(["-i", joined, "-af", loud, "-c:v", "copy", *AUDIO_ARGS, mixed])
+    else:
+        shutil.copy(joined, mixed)
     joined.unlink()
 
     cues: list[Cue] = []
