@@ -185,7 +185,8 @@ def build(
     segments: list[Segment] = []
     cursor = 0.0
 
-    with Renderer(sb.format, _globals(sb)) as renderer:
+    host_globals = _globals(sb, sb_path)
+    with Renderer(sb.format, host_globals) as renderer:
         for scene in sb.scenes:
             sid = str(scene.id)
             if only and sid not in only:
@@ -232,7 +233,7 @@ def build(
             key = _digest(raw, sb.format.model_dump(), sb.style.model_dump(), duration, audio_len,
                           stamp, tver, __version__,
                           sb.hud.model_dump() if sb.hud else None,
-                          sb.character.model_dump())  # fmt: skip
+                          host_globals["CHARACTER"])  # fmt: skip
             seg = cache / f"{sid}-{key}.mp4"
             if force or not seg.exists():
                 log(f"  rendering {sid} ({duration:.1f}s)")
@@ -267,8 +268,14 @@ def build(
     return _finish(sb, sb_path, out_dir, segments, log)
 
 
-def _globals(sb: Storyboard) -> dict[str, Any]:
-    return {"HUD": sb.hud.model_dump() if sb.hud else None, "CHARACTER": sb.character.model_dump()}
+def _globals(sb: Storyboard, sb_path: Path) -> dict[str, Any]:
+    character = sb.character.model_dump()
+    if sb.character.svg:
+        svg_file = resolve_path(sb_path, sb.character.svg)
+        if not svg_file.is_file():
+            raise MediaError(f"character svg not found: {svg_file}")
+        character["svg_markup"] = svg_file.read_text(encoding="utf-8")
+    return {"HUD": sb.hud.model_dump() if sb.hud else None, "CHARACTER": character}
 
 
 def _finish(
@@ -372,7 +379,8 @@ def still(storyboard_path: Path, out_dir: Path, scene_id: str, t: float, log: Lo
         html_file = scene_html_path(scene, sb_path)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"still-{scene_id}-{t:.1f}.png"
-    with Renderer(sb.format, _globals(sb)) as r:
+    host_globals = _globals(sb, sb_path)
+    with Renderer(sb.format, host_globals) as r:
         r.still(raw, sb.style, duration, min(t, duration), out, out_dir, html_file)
     log(f"wrote {out}")
     return out

@@ -108,11 +108,68 @@
     if (P.big) el('div', `text-align:center;color:#fff;font:${u * 10.5}px/1 ${FONT_H};letter-spacing:.01em;margin-top:${u * 1}px;background:#25d366;color:#05301a;border-radius:${u * 2}px;padding:${u * 2.2}px 0`, panel, P.big);
   }
 
-  // ---- the cartoon host (inline SVG, local coords: body centre x=100, feet y=410)
+  // ---- the cartoon host: built-in SVG, or your own SVG with animation hooks (docs/storyboard.md)
+  const custom = !!CH.svg_markup;
+  const cx = sc.side === 'left' ? W * 0.28 : sc.side === 'right' ? W * 0.72 : W * 0.5;
+  const bob = el('div', 'position:absolute;will-change:transform');
+  let baseLeft, baseTop, rig, headOff = [0, 0];
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const rot = (g, a, x, y) => g.setAttribute('transform', `rotate(${a} ${x} ${y})`);
+
+  if (custom) {
+    bob.innerHTML = CH.svg_markup;
+    const svg = bob.querySelector('svg');
+    const vb = svg.getAttribute('viewBox').split(/[ ,]+/).map(Number);
+    const floorY = parseFloat(svg.dataset.floor), cxU = parseFloat(svg.dataset.cx), bodyH = parseFloat(svg.dataset.bodyH);
+    const scale = (H * 0.31) / bodyH;
+    const w = vb[2] * scale, h = vb[3] * scale;
+    ['width', 'height'].forEach((k) => svg.removeAttribute(k));
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    svg.style.cssText = 'overflow:visible;display:block;transform-origin:' + (cxU - vb[0]) * scale + 'px 0';
+    if (sc.side === 'right' && svg.dataset.mirror === 'auto') svg.style.transform = 'scaleX(-1)';
+    bob.style.width = w + 'px'; bob.style.height = h + 'px';
+    baseLeft = cx - (cxU - vb[0]) * scale;
+    baseTop = FLOOR + u * 1.2 - (floorY - vb[1]) * scale;
+    const hd = (svg.dataset.head || '94 72').split(/\s+/).map(Number);
+    headOff = [(hd[0] - vb[0]) * scale, (hd[1] - vb[1]) * scale];
+    const q = (id) => svg.querySelector('#' + id);
+    const pivot = (g) => (g && g.dataset.pivot ? g.dataset.pivot.split(/\s+/).map(Number) : [0, 0]);
+    const mkArm = (id) => {
+      const g = q(id);
+      if (!g) return null;
+      const [px, py] = pivot(g);
+      return { g, px, py, up: g.dataset.state === 'up', lower: +(g.dataset.lower || 140), raise: +(g.dataset.raise || 150) };
+    };
+    const arms = [mkArm('vm-arm-l'), mkArm('vm-arm-r')].filter(Boolean);
+    const eyes = q('vm-eyes'), mouthG = q('vm-mouth');
+    rig = {
+      arms(t, pose, k) {
+        const anyUp = arms.some((a) => a.up);
+        arms.forEach((a, i) => {
+          const sgn = Math.sign(a.raise) || 1;
+          const want = pose === 'cheer' || ((pose === 'point' || pose === 'wave') && (anyUp ? a.up : i === arms.length - 1));
+          let ang;
+          if (a.up) ang = want ? (pose === 'wave' ? Math.sin(t * 9) * 14 : Math.sin(t * 2) * 3) : lerp(0, a.lower, k);
+          else ang = want ? lerp(0, a.raise, k) + (pose === 'cheer' ? Math.sin(t * 7) * 8 * sgn : 0) : Math.sin(t * 2.4) * 3 * sgn;
+          rot(a.g, ang, a.px, a.py);
+        });
+      },
+      blink(c) {
+        if (!eyes) return;
+        const [ex, ey] = pivot(eyes);
+        eyes.setAttribute('transform', `translate(${ex} ${ey}) scale(1 ${c}) translate(${-ex} ${-ey})`);
+      },
+      mouth(v) {
+        if (!mouthG) return;
+        const [mx, my] = pivot(mouthG);
+        mouthG.setAttribute('transform', `translate(${mx} ${my}) scale(${1 + v * 0.1} ${1 + v * (+mouthG.dataset.open || 1.7)}) translate(${-mx} ${-my})`);
+      },
+    };
+  } else {
   const skin = CH.skin, hair = CH.hair, robe = CH.robe, trim = CH.trim;
   const shade = 'rgba(60,40,10,.10)';
   const svgW = u * 52, svgH = svgW * (500 / 360);
-  const bob = el('div', `position:absolute;width:${svgW}px;height:${svgH}px;will-change:transform`);
+  bob.style.width = svgW + 'px'; bob.style.height = svgH + 'px';
   bob.innerHTML = `
   <svg viewBox="-80 -70 360 500" width="${svgW}" height="${svgH}" style="overflow:visible">
     <ellipse cx="100" cy="408" rx="78" ry="11" fill="rgba(0,0,0,.35)"/>
@@ -138,18 +195,37 @@
     <path d="M78 113 Q100 134 122 113" fill="none" stroke="#6b2c20" stroke-width="4.5" stroke-linecap="round"/>
     <ellipse id="mouth" cx="100" cy="120" rx="15" ry="0.1" fill="#4a1914"/>
   </svg>`;
-  const $ = (id) => bob.querySelector('#' + id);
-  const armR = $('armR'), armL = $('armL'), eyeL = $('eyeL'), eyeR = $('eyeR'), mouth = $('mouth'), brows = $('brows');
-  const cx = sc.side === 'left' ? W * 0.28 : sc.side === 'right' ? W * 0.72 : W * 0.5;
-  const baseLeft = cx - svgW * (180 / 360);   // body centre x=100 -> 180/360 of the viewBox
-  const baseTop = FLOOR + u * 1.2 - svgH * ((410 + 70) / 500);
+    const $ = (id) => bob.querySelector('#' + id);
+    const armR = $('armR'), armL = $('armL'), eyeL = $('eyeL'), eyeR = $('eyeR'), mouth = $('mouth'), brows = $('brows');
+    baseLeft = cx - svgW * (180 / 360);
+    baseTop = FLOOR + u * 1.2 - svgH * ((410 + 70) / 500);
+    headOff = [(100 + 80) * (svgW / 360), (88 + 70) * (svgW / 360)];
+    rig = {
+      arms(t, pose, k) {
+        const sway = Math.sin(t * 2.4) * 3;
+        let aL = 7 + sway, aR = -7 - sway;
+        const toward = sc.side === 'left' ? 'R' : 'L';
+        if (pose === 'point') {
+          const ang = lerp(7, 148 + Math.sin(t * 6) * 4, k);
+          if (toward === 'R') aR = -ang; else aL = ang;
+        } else if (pose === 'wave') {
+          aR = -lerp(7, 140 + Math.sin(t * 9) * 16, k);
+        } else if (pose === 'cheer') {
+          const up = 150 + Math.sin(t * 7) * 8;
+          aL = lerp(7, up, k); aR = -lerp(7, up, k);
+        }
+        rot(armL, aL, 59, 160); rot(armR, aR, 141, 160);
+      },
+      blink(c) { eyeL.setAttribute('ry', 6.8 * c); eyeR.setAttribute('ry', 6.8 * c); },
+      mouth(v) { mouth.setAttribute('ry', Math.max(0.1, v * 15)); },
+    };
+  }
+  bob.style.transformOrigin = '0 0';
   bob.style.left = baseLeft + 'px';
   bob.style.top = baseTop + 'px';
 
   const D = window.DURATION, FPS = window.FPS || 30;
   const env = sc.env || [];
-  const rot = (g, a, x, y) => g.setAttribute('transform', `rotate(${a} ${x} ${y})`);
-  const lerp = (a, b, k) => a + (b - a) * k;
 
   window.seek = (t) => {
     const a = sceneAlpha(t, 0.12);
@@ -159,34 +235,21 @@
     const k = prog(t, 0.05, 0.55);
     const slide = (1 - easeOutBack(k)) * (sc.side === 'left' ? -1 : 1) * u * 40;
     const hop = Math.abs(Math.sin(t * 3.1)) * u * 0.55;
-    bob.style.transform = `translate(${sc.side === 'center' ? 0 : slide}px, ${(sc.side === 'center' ? (1 - easeOutBack(k)) * u * 30 : 0) - hop}px)`;
-
-    // arms by pose; angle>0 swings the arm to the viewer's left, <0 to the right
-    const sway = Math.sin(t * 2.4) * 3;
-    let aL = 7 + sway, aR = -7 - sway;
-    const toward = sc.side === 'left' ? 'R' : 'L';   // arm on the side facing the card/centre
-    const raise = easeOutBack(prog(t, 0.35, 0.45));
-    if (sc.pose === 'point') {
-      const ang = lerp(7, 148 + Math.sin(t * 6) * 4, raise);
-      if (toward === 'R') aR = -ang; else aL = ang;
-    } else if (sc.pose === 'wave') {
-      aR = -lerp(7, 140 + Math.sin(t * 9) * 16, raise);
-    } else if (sc.pose === 'cheer') {
-      const up = 150 + Math.sin(t * 7) * 8;
-      aL = lerp(7, up, raise); aR = -lerp(7, up, raise);
+    if (sc.shot === 'close') {
+      // push in on the face: scale about the bob's origin, then put the head at the frame centre
+      const kk = easeOut(prog(t, 0, 0.5)), S = 1 + 1.4 * kk;
+      const tx = (W * 0.5 - baseLeft - S * headOff[0]) * kk, ty = (H * 0.46 - baseTop - S * headOff[1]) * kk;
+      bob.style.transform = `translate(${tx}px, ${ty - hop}px) scale(${S})`;
+    } else {
+      bob.style.transform = `translate(${sc.side === 'center' ? 0 : slide}px, ${(sc.side === 'center' ? (1 - easeOutBack(k)) * u * 30 : 0) - hop}px)`;
     }
-    rot(armL, aL, 59, 160); rot(armR, aR, 141, 160);
 
-    // blink every ~3 s
-    const bl = (t % 3.1);
-    const closed = bl > 2.95 && bl < 3.05 ? 0.08 : 1;
-    eyeL.setAttribute('ry', 6.8 * closed); eyeR.setAttribute('ry', 6.8 * closed);
-    brows.setAttribute('transform', `translate(0 ${Math.sin(t * 2) * 0.8})`);
-
-    // mouth from narration loudness (0..1 per frame, lightly smoothed)
+    // arms by pose, blink every ~3 s, mouth from narration loudness (0..1 per frame, smoothed)
+    rig.arms(t, sc.pose, easeOutBack(prog(t, 0.35, 0.45)));
+    const bl = t % 3.1;
+    rig.blink(bl > 2.95 && bl < 3.05 ? 0.08 : 1);
     const i = Math.min(env.length - 1, Math.floor(t * FPS));
-    const v = env.length ? (env[Math.max(0, i)] * 0.6 + env[Math.max(0, i - 1)] * 0.4) : 0;
-    mouth.setAttribute('ry', Math.max(0.1, v * 15));
+    rig.mouth(env.length ? env[Math.max(0, i)] * 0.6 + env[Math.max(0, i - 1)] * 0.4 : 0);
 
     // pieces
     if (hud) { const p = prog(t, 0, 0.4); hud.style.opacity = easeOut(p); hud.style.transform = `translateY(${(1 - easeOut(p)) * -u * 6}px)`; }

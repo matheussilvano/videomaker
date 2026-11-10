@@ -68,3 +68,20 @@ def test_invalid_json_and_missing_file(tmp_path):
         load_storyboard(bad)
     with pytest.raises(StoryboardError, match="not found"):
         load_storyboard(tmp_path / "missing.json")
+
+
+def test_story_close_shot_and_custom_character(storyboard_file):
+    sb = load_storyboard(
+        storyboard_file(
+            {
+                "character": {"svg": "me.svg", "skin": "#c68642"},
+                "scenes": [{"type": "story", "shot": "close", "headline": "Hi"}],
+            }
+        )
+    )
+    assert sb.scenes[0].shot == "close" and sb.character.svg == "me.svg"
+
+
+def test_bad_shot_is_rejected(storyboard_file):
+    with pytest.raises(StoryboardError, match="shot"):
+        load_storyboard(storyboard_file({"scenes": [{"type": "story", "shot": "drone"}]}))

@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- `character.svg`: bring your own host drawing, animated through `vm-*` ids (arms, eyes, mouth).
+- `story` scenes: `shot: "close"` pushes the camera in on the host's face.
+- Captions: `*word*` highlights words in the accent color.
+- Skip loudnorm on silent mixes (it produced NaN in recent ffmpeg).
 
 ## 0.1.0
 - First release: storyboard JSON to `final.mp4` (`videomaker build`), cached per scene.

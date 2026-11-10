@@ -74,3 +74,23 @@ def test_mouth_envelope_follows_loudness(tmp_path: Path):
     env = mouth_envelope(path, fps=30)
     assert len(env) == 60
     assert max(env[:25]) < 0.05 and min(env[35:]) > 0.5
+
+
+def test_highlight_markers_survive_chunking_and_are_stripped_for_srt(tmp_path: Path):
+    cues = cues_for_text("Dia *4 de junho* em *Fátima* hoje", 0.0, 6.0, words_per_cue=3)
+    assert [c.text for c in cues] == ["Dia *4* *de*", "*junho* em *Fátima*", "hoje"]
+    write_srt(cues, tmp_path / "a.srt")
+    assert "*" not in (tmp_path / "a.srt").read_text()
+    write_ass(cues, Format(), Style(accent="#f2c230"), tmp_path / "a.ass")
+    ass = (tmp_path / "a.ass").read_text()
+    assert r"{\c&H30C2F2&}4{\c&HFFFFFF&}" in ass  # accent #f2c230 in ASS BGR order
+
+
+def test_cue_without_highlights_is_unchanged():
+    assert cues_for_text("plain words here", 0, 3, words_per_cue=5)[0].text == "plain words here"
+
+
+def test_highlight_followed_by_punctuation_leaves_no_stray_asterisks():
+    cues = cues_for_text("Primeiro, o *embarque*, depois *Fátima*. Fim", 0.0, 5.0, words_per_cue=10)
+    assert cues[0].text == "Primeiro, o *embarque,* depois *Fátima.* Fim"
+    assert cues[0].text.count("*") % 2 == 0

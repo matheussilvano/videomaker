@@ -72,6 +72,8 @@ class Character(_Strict):
     robe: str = "#f6f1e6"
     trim: str = "#d6a636"
     collar: bool = True  # black clerical collar with the white tab
+    # Your own character: path to an SVG with animation hooks (see docs/storyboard.md).
+    svg: str | None = None
 
 
 class Hud(_Strict):
@@ -168,6 +170,7 @@ class StoryScene(_Scene):
     type: Literal["story"]
     backdrop: Literal["navy", "germany", "belgium", "portugal", "gold"] = "navy"
     pose: Literal["idle", "point", "wave", "cheer"] = "idle"
+    shot: Literal["wide", "close"] = "wide"  # "close": the camera pushes in on the host's face
     side: Literal["left", "right", "center"] = "right"
     headline: str | None = None
     headline_sub: str | None = None
