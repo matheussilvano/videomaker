@@ -1,0 +1,13 @@
+{
+  "name": "videomaker",
+  "displayName": "Videomaker",
+  "version": "0.1.0",
+  "description": "Make videos end to end with Claude Code: storyboard, local narration, animated scenes, footage editing and captions. Free and offline-capable.",
+  "author": { "name": "videomaker contributors", "url": "https://github.com/matheussilvano/videomaker" },
+  "homepage": "https://github.com/matheussilvano/videomaker",
+  "repository": "https://github.com/matheussilvano/videomaker",
+  "license": "MIT",
+  "keywords": ["video", "ffmpeg", "tts", "motion-graphics", "captions", "reels"],
+  "documentationUrl": "https://github.com/matheussilvano/videomaker#readme",
+  "supportUrl": "https://github.com/matheussilvano/videomaker/issues"
+}

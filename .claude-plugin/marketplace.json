@@ -1,0 +1,12 @@
+{
+  "name": "videomaker",
+  "description": "Community plugin that makes videos end to end with Claude Code: script, narration, flat-illustration scenes, footage editing and captions, all local and free.",
+  "owner": { "name": "videomaker contributors", "url": "https://github.com/matheussilvano/videomaker" },
+  "plugins": [
+    {
+      "name": "videomaker",
+      "source": "./plugin",
+      "description": "Turn an idea, a script or raw footage into a finished video: storyboard, local narration, animated scenes with a cartoon host, photo cards, captions and music."
+    }
+  ]
+}

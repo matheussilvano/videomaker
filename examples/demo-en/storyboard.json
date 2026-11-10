@@ -1,0 +1,47 @@
+{
+  "title": "Videomaker demo",
+  "language": "en",
+  "format": "vertical",
+  "voice": { "engine": "kokoro", "name": "am_michael", "speed": 1.0 },
+  "captions": { "enabled": true, "style": "impact", "words_per_cue": 3 },
+  "hud": {
+    "badge": "v1",
+    "title": "VIDEOMAKER",
+    "subtitle": "SCRIPT TO VIDEO · FREE · LOCAL",
+    "right_top": "0 USD",
+    "right_bottom": "OPEN SOURCE"
+  },
+  "scenes": [
+    {
+      "id": "hook", "type": "story", "backdrop": "navy", "pose": "wave", "side": "center",
+      "headline": "Make a video", "headline_sub": "from a text file",
+      "narration": "Make a video from a text file."
+    },
+    {
+      "id": "how", "type": "story", "backdrop": "gold", "pose": "point", "side": "right",
+      "panel": {
+        "title": "Three steps", "subtitle": "No account. No API key.",
+        "rows": [
+          { "text": "Write", "value": "a storyboard" },
+          { "text": "Check", "value": "stills in seconds" },
+          { "text": "Build", "value": "final.mp4" }
+        ]
+      },
+      "narration": "Write a storyboard. Check a still. Build the video."
+    },
+    {
+      "id": "stat", "type": "story", "backdrop": "portugal", "pose": "cheer", "side": "center",
+      "headline": "100% local", "headline_sub": "narration, captions, render",
+      "narration": "Narration, captions and rendering all run on your machine."
+    },
+    {
+      "id": "cta", "type": "story", "backdrop": "navy", "pose": "wave", "side": "right",
+      "panel": {
+        "title": "Try it", "subtitle": "github.com/matheussilvano/videomaker",
+        "rows": [ { "text": "make demo", "value": "builds this video" } ]
+      },
+      "narration": "Try it. It is open source.",
+      "hold": 1.2
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+name: Feature request
+description: A scene type, pose, language, caption style or workflow you want
+labels: [enhancement]
+body:
+  - type: textarea
+    id: want
+    attributes: {label: What do you want to make, description: "Describe the video, not only the feature."}
+    validations: {required: true}
+  - type: textarea
+    id: ref
+    attributes: {label: Reference, description: "A link or description of the look you are after."}

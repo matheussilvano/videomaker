@@ -1,0 +1,15 @@
+videomaker is MIT licensed (see LICENSE). It builds on and can install the following.
+
+Bundled
+- Anton font, SIL Open Font License 1.1 (src/videomaker/fonts/OFL-Anton.txt)
+- Montserrat font, SIL Open Font License 1.1 (src/videomaker/fonts/OFL-Montserrat.txt)
+
+Downloaded by `videomaker setup` (not redistributed here)
+- Kokoro 82M ONNX model and voices via kokoro-onnx (Apache-2.0), SHA-256 pinned
+- video-use by Browser Use (MIT), pinned commit
+- claude-motion-design by Howseen AI (MIT), pinned commit
+- Playwright Chromium (Apache-2.0)
+
+Libraries: pydantic, playwright, kokoro-onnx, soundfile, numpy, faster-whisper (optional). FFmpeg is used as an external program.
+
+Photos in your own videos keep their own licenses. Videomaker never downloads photos for you without you looking at them; credit what requires credit.

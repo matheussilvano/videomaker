@@ -1,0 +1,14 @@
+name: Bug report
+description: Something renders wrong, crashes or sounds off
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes: {label: What happened, description: "Include the command and the error text."}
+    validations: {required: true}
+  - type: textarea
+    id: storyboard
+    attributes: {label: Smallest storyboard that shows it, description: "Synthetic content only. No personal photos or numbers.", render: json}
+  - type: input
+    id: env
+    attributes: {label: "`videomaker doctor` summary and OS"}
